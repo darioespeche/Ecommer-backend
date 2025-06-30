@@ -4,7 +4,7 @@ const User = require("../models/User");
 
 const opts = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: "claveSecreta123", // reemplaza por una segura o usa .env
+  secretOrKey: "claveSuperSecreta",
 };
 
 passport.use(
