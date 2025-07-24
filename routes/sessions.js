@@ -2,33 +2,27 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
-const User = require("../models/User");
+const UserDTO = require("../dto/UserDTO");
+const UserRepository = require("../repository/UserRepository");
 
 const router = express.Router();
 
 // 🔐 Registro de usuario
 router.post("/register", async (req, res) => {
   try {
-    const { first_name, last_name, email, age, password } = req.body;
+    const { email } = req.body;
 
-    const userExist = await User.findOne({ email });
+    const userExist = await UserRepository.getUserByEmail(email);
     if (userExist) {
       return res.status(400).json({ message: "El usuario ya existe" });
     }
 
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    const newUser = new User({
-      first_name,
-      last_name,
-      email,
-      age,
-      password: hashedPassword,
-    });
+    const user = await UserRepository.createUser(req.body);
+    const userDTO = new UserDTO(user);
 
-    await newUser.save();
     res
       .status(201)
-      .json({ message: "Usuario registrado correctamente", user: newUser });
+      .json({ message: "Usuario registrado correctamente", user: userDTO });
   } catch (err) {
     res
       .status(500)
@@ -41,7 +35,7 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await UserRepository.getUserByEmail(email);
     if (!user || !bcrypt.compareSync(password, user.password)) {
       return res.status(401).json({ message: "Credenciales incorrectas" });
     }
@@ -49,9 +43,7 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "1h",
-      }
+      { expiresIn: "1h" }
     );
 
     res.json({ message: "Login exitoso", token });
@@ -65,7 +57,8 @@ router.get(
   "/current",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
-    res.json({ user: req.user });
+    const userDTO = new UserDTO(req.user);
+    res.json({ user: userDTO });
   }
 );
 

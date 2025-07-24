@@ -1,66 +1,50 @@
 const express = require("express");
-const router = express.Router();
-const User = require("../models/User");
 const passport = require("passport");
+const authorizeRole = require("../middlewares/authorizeRole");
 
-// Obtener todos los usuarios (protegido)
+const {
+  registerUser,
+  getAllUsers,
+  getUserById,
+  updateUser,
+  deleteUser,
+} = require("../controllers/UserController");
+
+const router = express.Router();
+
+// Registrar usuario (público)
+router.post("/register", registerUser);
+
+// Obtener todos los usuarios (solo admin)
 router.get(
   "/",
   passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    try {
-      const users = await User.find().select("-password");
-      res.json(users);
-    } catch (error) {
-      res.status(500).json({ message: "Error al obtener usuarios" });
-    }
-  }
+  authorizeRole("admin"),
+  getAllUsers
 );
 
-// Obtener un usuario por ID (protegido)
+// Obtener un usuario por ID (admin)
 router.get(
   "/:id",
   passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    try {
-      const user = await User.findById(req.params.id).select("-password");
-      if (!user)
-        return res.status(404).json({ message: "Usuario no encontrado" });
-      res.json(user);
-    } catch (error) {
-      res.status(500).json({ message: "Error al obtener usuario" });
-    }
-  }
+  authorizeRole("admin"),
+  getUserById
 );
 
-// Actualizar un usuario (protegido)
+// Actualizar usuario (admin)
 router.put(
   "/:id",
   passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    try {
-      const updated = await User.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-      });
-      res.json(updated);
-    } catch (error) {
-      res.status(500).json({ message: "Error al actualizar usuario" });
-    }
-  }
+  authorizeRole("admin"),
+  updateUser
 );
 
-// Eliminar un usuario (protegido)
+// Eliminar usuario (admin)
 router.delete(
   "/:id",
   passport.authenticate("jwt", { session: false }),
-  async (req, res) => {
-    try {
-      await User.findByIdAndDelete(req.params.id);
-      res.json({ message: "Usuario eliminado" });
-    } catch (error) {
-      res.status(500).json({ message: "Error al eliminar usuario" });
-    }
-  }
+  authorizeRole("admin"),
+  deleteUser
 );
 
 module.exports = router;
