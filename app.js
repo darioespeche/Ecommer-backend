@@ -11,6 +11,8 @@ app.use(express.json());
 app.use(passport.initialize());
 
 app.use("/api/sessions", sessionsRouter);
+const usersRouter = require("./routes/users");
+app.use("/api/users", usersRouter);
 
 // Conexión MongoDB
 mongoose
