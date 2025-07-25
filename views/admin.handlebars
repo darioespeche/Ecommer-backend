@@ -1,0 +1,30 @@
+<!-- views/admin.handlebars -->
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Panel Admin</title>
+  </head>
+  <body>
+    <h1>Bienvenido Admin</h1>
+    <form action="/products" method="POST">
+      <input type="text" name="title" placeholder="Título" required />
+      <input
+        type="text"
+        name="description"
+        placeholder="Descripción"
+        required
+      />
+      <input type="number" name="price" placeholder="Precio" required />
+      <button type="submit">Agregar Producto</button>
+    </form>
+
+    <h2>Productos existentes</h2>
+    {{#each productos}}
+      <div>
+        <h3>{{this.title}}</h3>
+        <p>{{this.description}}</p>
+        <p>Precio: ${{this.price}}</p>
+      </div>
+    {{/each}}
+  </body>
+</html>

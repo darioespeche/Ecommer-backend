@@ -1,10 +1,9 @@
 // controllers/ProductController.js
-const ProductManager = require("../managers/ProductManager");
-const productManager = new ProductManager();
+const ProductRepository = require("../repository/ProductRepository");
 
 const getAllProducts = async (req, res) => {
   try {
-    const products = await productManager.getAllBasic();
+    const products = await ProductRepository.getAllBasic();
     res.json(products);
   } catch (err) {
     res
@@ -14,8 +13,9 @@ const getAllProducts = async (req, res) => {
 };
 
 const getProductById = async (req, res) => {
+  const { pid } = req.params;
   try {
-    const product = await productManager.getById(req.params.id);
+    const product = await ProductRepository.getById(pid);
     if (!product)
       return res.status(404).json({ message: "Producto no encontrado" });
     res.json(product);
@@ -28,7 +28,7 @@ const getProductById = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    const product = await productManager.addProduct(req.body);
+    const product = await ProductRepository.addProduct(req.body);
     res.status(201).json(product);
   } catch (err) {
     res
@@ -38,8 +38,9 @@ const createProduct = async (req, res) => {
 };
 
 const updateProduct = async (req, res) => {
+  const { pid } = req.params;
   try {
-    const updated = await productManager.updateProduct(req.params.id, req.body);
+    const updated = await ProductRepository.updateProduct(pid, req.body);
     if (!updated)
       return res.status(404).json({ message: "Producto no encontrado" });
     res.json(updated);
@@ -51,8 +52,9 @@ const updateProduct = async (req, res) => {
 };
 
 const deleteProduct = async (req, res) => {
+  const { pid } = req.params;
   try {
-    const deleted = await productManager.deleteProduct(req.params.id);
+    const deleted = await ProductRepository.deleteProduct(pid);
     if (!deleted)
       return res.status(404).json({ message: "Producto no encontrado" });
     res.json({ message: "Producto eliminado" });

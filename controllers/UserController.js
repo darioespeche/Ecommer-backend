@@ -2,6 +2,11 @@ const UserRepository = require("../repository/UserRepository");
 
 const registerUser = async (req, res) => {
   try {
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Email y contraseña son requeridos" });
+    }
     const user = await UserRepository.createUser(req.body);
     res.status(201).json({ message: "Usuario registrado", user });
   } catch (error) {

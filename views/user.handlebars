@@ -1,0 +1,21 @@
+<!-- views/user.handlebars -->
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Panel Usuario</title>
+  </head>
+  <body>
+    <h1>Hola Usuario</h1>
+    <p>Explorá productos:</p>
+
+    {{#each productos}}
+      <div>
+        <h3>{{this.title}}</h3>
+        <p>{{this.description}}</p>
+        <p>Precio: ${{this.price}}</p>
+        <button>Agregar al carrito</button>
+        <!-- Esto se conecta después -->
+      </div>
+    {{/each}}
+  </body>
+</html>
