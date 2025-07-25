@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const passport = require("passport");
 const UserDTO = require("../dto/UserDTO");
 const UserRepository = require("../repository/UserRepository");
+const { sendRecoveryEmail } = require("../services/mailService");
 
 const router = express.Router();
 
@@ -61,5 +62,54 @@ router.get(
     res.json({ user: userDTO });
   }
 );
+
+// 🔐 Recuperación de contraseña
+router.post("/recover", async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await UserRepository.getUserByEmail(email);
+    if (!user)
+      return res.status(404).json({ message: "Usuario no encontrado" });
+
+    const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    await sendRecoveryEmail(email, token);
+    res.json({ message: "Correo enviado con instrucciones" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error al enviar email", error: error.message });
+  }
+});
+// 🔐 Restablecimiento de contraseña
+router.get("/reset-password", (req, res) => {
+  const { token } = req.query;
+  res.render("resetPassword", { token });
+});
+router.post("/reset-password", async (req, res) => {
+  const { token, password } = req.body;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await UserRepository.getUserByEmail(decoded.email);
+
+    if (!user) return res.status(404).send("Usuario no encontrado");
+
+    const samePassword = bcrypt.compareSync(password, user.password);
+    if (samePassword)
+      return res
+        .status(400)
+        .send("La contraseña no puede ser igual a la anterior");
+
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    await UserRepository.updateUser(user._id, { password: hashedPassword });
+
+    res.send("Contraseña actualizada exitosamente");
+  } catch (error) {
+    res.status(400).send("Token inválido o expirado");
+  }
+});
 
 module.exports = router;
