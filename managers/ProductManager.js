@@ -3,7 +3,7 @@ const Product = require("../models/Product");
 
 class ProductManager {
   // Obtener todos los productos sin filtros
-  async getAllBasic() {
+  async getAllProducts() {
     return await Product.find().lean();
   }
 

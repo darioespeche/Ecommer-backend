@@ -15,7 +15,15 @@ const panelRouter = require("./routes/panel.router");
 
 const app = express();
 const PORT = 8080;
-app.engine("handlebars", handlebars.engine());
+app.engine(
+  "handlebars",
+  handlebars.engine({
+    defaultLayout: "main",
+    layoutsDir: __dirname + "/views/layouts",
+    partialsDir: __dirname + "/views/partials",
+  })
+);
+
 app.set("view engine", "handlebars");
 app.set("views", __dirname + "/views");
 app.use(

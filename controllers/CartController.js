@@ -2,6 +2,10 @@
 const CartManager = require("../managers/CartManager");
 const cartManager = new CartManager();
 const CartRepository = require("../repository/CartRepository");
+const ProductRepository = require("../repository/ProductRepository");
+const CartDTO = require("../dto/CartDTO");
+const Ticket = require("../models/Ticket");
+const { v4: uuidv4 } = require("uuid");
 
 const createCart = async (req, res) => {
   try {
@@ -16,15 +20,14 @@ const createCart = async (req, res) => {
 
 const getCartById = async (req, res) => {
   try {
-    const cart = await CartRepository.getCartById(req.params.cid); // <-- corregido
+    const cart = await CartRepository.getCartById(req.params.cid);
     if (!cart)
       return res.status(404).json({ message: "Carrito no encontrado" });
-    res.json(cart);
+    res.json(new CartDTO(cart));
   } catch (err) {
-    res.status(500).json({
-      message: "Error al obtener carrito",
-      error: err.message,
-    });
+    res
+      .status(500)
+      .json({ message: "Error al obtener carrito", error: err.message });
   }
 };
 
@@ -33,9 +36,9 @@ const addProductToCart = async (req, res) => {
     const { quantity } = req.body;
 
     const cart = await CartRepository.addProductToCart(
-      req.params.cid, // ID del carrito
-      req.params.pid, // ID del producto
-      quantity || 1 // Cantidad, por defecto 1
+      req.params.cid,
+      req.params.pid,
+      quantity || 1
     );
     if (!cart)
       return res.status(404).json({ message: "Carrito no encontrado" });
@@ -51,7 +54,7 @@ const addProductToCart = async (req, res) => {
 const removeProductFromCart = async (req, res) => {
   try {
     const cart = await CartRepository.removeProductFromCart(
-      req.params.cid, // <-- corregido
+      req.params.cid,
       req.params.pid
     );
     if (!cart)
@@ -69,7 +72,7 @@ const removeProductFromCart = async (req, res) => {
 
 const clearCart = async (req, res) => {
   try {
-    const cart = await CartRepository.clearCart(req.params.cid); // <-- corregido
+    const cart = await CartRepository.clearCart(req.params.cid);
     if (!cart)
       return res.status(404).json({ message: "Carrito no encontrado" });
     res.json({ message: "Carrito vaciado" });
@@ -81,7 +84,6 @@ const clearCart = async (req, res) => {
   }
 };
 
-// CartController.js
 const updateProductQuantity = async (req, res) => {
   try {
     const { quantity } = req.body;
@@ -103,6 +105,58 @@ const updateProductQuantity = async (req, res) => {
   }
 };
 
+const purchaseCart = async (req, res) => {
+  try {
+    const cartId = req.params.cid;
+    const cart = await CartRepository.getCartById(cartId);
+
+    if (!cart) return res.status(404).send("Carrito no encontrado");
+
+    const purchasedProducts = [];
+    const failedProducts = [];
+    let totalAmount = 0;
+
+    for (const item of cart.products) {
+      const product = await ProductRepository.getProductById(item.product);
+
+      if (product.stock >= item.quantity) {
+        product.stock -= item.quantity;
+        await product.save();
+
+        purchasedProducts.push({
+          product: product._id,
+          quantity: item.quantity,
+        });
+
+        totalAmount += product.price * item.quantity;
+      } else {
+        failedProducts.push({
+          product: product.title,
+          reason: "Stock insuficiente",
+        });
+      }
+    }
+
+    const ticket = await Ticket.create({
+      code: uuidv4(),
+      amount: totalAmount,
+      purchaser: req.user?.email || "usuario_no_logueado",
+      products: purchasedProducts,
+    });
+
+    res.status(200).json({
+      message: failedProducts.length
+        ? "Compra realizada parcialmente"
+        : "Compra realizada con éxito",
+      ticket,
+      failedProducts,
+    });
+  } catch (error) {
+    console.error("Error al procesar la compra:", error);
+    res.status(500).send("Error interno del servidor");
+  }
+};
+
 module.exports = {
   createCart,
   getCartById,
@@ -110,4 +164,5 @@ module.exports = {
   removeProductFromCart,
   clearCart,
   updateProductQuantity,
+  purchaseCart,
 };

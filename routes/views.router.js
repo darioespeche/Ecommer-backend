@@ -4,6 +4,7 @@ const passport = require("passport");
 const router = express.Router();
 const UserRepository = require("../repository/UserRepository");
 const bcrypt = require("bcrypt");
+const ProductRepository = require("../repository/ProductRepository");
 
 //Vita principal
 router.get("/", (req, res) => {
@@ -26,13 +27,18 @@ router.post(
       return res.status(401).send("Credenciales incorrectas");
     }
 
-    req.login(user, (err) => {
+    req.login(user, async (err) => {
       if (err) return res.status(500).send("Error en el login");
 
-      if (user.role === "admin") {
-        res.render("admin", { user });
-      } else {
-        res.render("user", { user });
+      try {
+        const productos = await ProductRepository.getAllProducts();
+        if (user.role === "admin") {
+          res.render("admin", { user, productos });
+        } else {
+          res.render("user", { user, productos });
+        }
+      } catch (error) {
+        res.status(500).send("Error al cargar productos");
       }
     });
   }

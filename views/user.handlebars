@@ -5,7 +5,7 @@
     <title>Panel Usuario</title>
   </head>
   <body>
-    <h1>Hola Usuario</h1>
+    <h1>Hola {{user.first_name}}</h1>
     <p>Explorá productos:</p>
 
     {{#each productos}}
@@ -13,9 +13,24 @@
         <h3>{{this.title}}</h3>
         <p>{{this.description}}</p>
         <p>Precio: ${{this.price}}</p>
-        <button>Agregar al carrito</button>
-        <!-- Esto se conecta después -->
+        <button class="add-to-cart" data-product-id="{{this._id}}">
+          Agregar al carrito
+        </button>
       </div>
     {{/each}}
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => { const buttons =
+      document.querySelectorAll(".add-to-cart"); buttons.forEach(button => {
+      button.addEventListener("click", async () => { const productId =
+      button.getAttribute("data-product-id"); try { const response = await
+      fetch(`/api/carts/{{user.cart}}/products/${productId}`, { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+      quantity: 1 }) }); const result = await response.json(); if (response.ok)
+      { alert("Producto agregado al carrito!"); } else { alert("Error: " +
+      result.message); } } catch (error) { alert("Error al conectar con el
+      servidor"); } }); }); });
+    </script>
+
   </body>
 </html>

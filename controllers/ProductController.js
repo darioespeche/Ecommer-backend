@@ -1,10 +1,13 @@
 // controllers/ProductController.js
 const ProductRepository = require("../repository/ProductRepository");
 
+const ProductDTO = require("../dto/ProductDTO");
+
 const getAllProducts = async (req, res) => {
   try {
     const products = await ProductRepository.getAllBasic();
-    res.json(products);
+    const productsDTO = products.map((p) => new ProductDTO(p));
+    res.json(productsDTO);
   } catch (err) {
     res
       .status(500)
@@ -18,7 +21,7 @@ const getProductById = async (req, res) => {
     const product = await ProductRepository.getById(pid);
     if (!product)
       return res.status(404).json({ message: "Producto no encontrado" });
-    res.json(product);
+    res.json(new ProductDTO(product));
   } catch (err) {
     res
       .status(500)

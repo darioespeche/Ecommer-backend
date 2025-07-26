@@ -1,22 +1,34 @@
-// routes/products.router.js
 const { Router } = require("express");
 const productController = require("../controllers/ProductController");
+const authorizeRole = require("../middlewares/authorizeRole");
+const passport = require("passport");
 
 const router = Router();
 
-// GET /api/products
+// GET públicos
 router.get("/", productController.getAllProducts);
-
-// GET /api/products/:pid
 router.get("/:pid", productController.getProductById);
 
-// POST /api/products
-router.post("/", productController.createProduct);
+// Protegidas solo admin
+router.post(
+  "/",
+  passport.authenticate("jwt", { session: false }),
+  authorizeRole("admin"),
+  productController.createProduct
+);
 
-// PUT /api/products/:pid
-router.put("/:pid", productController.updateProduct);
+router.put(
+  "/:pid",
+  passport.authenticate("jwt", { session: false }),
+  authorizeRole("admin"),
+  productController.updateProduct
+);
 
-// DELETE /api/products/:pid
-router.delete("/:pid", productController.deleteProduct);
+router.delete(
+  "/:pid",
+  passport.authenticate("jwt", { session: false }),
+  authorizeRole("admin"),
+  productController.deleteProduct
+);
 
 module.exports = router;

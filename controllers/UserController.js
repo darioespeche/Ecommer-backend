@@ -1,14 +1,17 @@
 const UserRepository = require("../repository/UserRepository");
+const UserDTO = require("../dto/UserDTO");
 
 const registerUser = async (req, res) => {
   try {
+    const { email, password } = req.body;
     if (!email || !password) {
       return res
         .status(400)
         .json({ message: "Email y contraseña son requeridos" });
     }
     const user = await UserRepository.createUser(req.body);
-    res.status(201).json({ message: "Usuario registrado", user });
+    const userDTO = new UserDTO(user);
+    res.status(201).json({ message: "Usuario registrado", user: userDTO });
   } catch (error) {
     res
       .status(500)
@@ -19,7 +22,8 @@ const registerUser = async (req, res) => {
 const getAllUsers = async (req, res) => {
   try {
     const users = await UserRepository.getAllUsers();
-    res.json(users);
+    const usersDTO = users.map((user) => new UserDTO(user));
+    res.json(usersDTO);
   } catch (error) {
     res.status(500).json({ message: "Error al obtener usuarios" });
   }
@@ -32,7 +36,9 @@ const getUserById = async (req, res) => {
       return res.status(404).json({ message: "Usuario no encontrado" });
     res.json(user);
   } catch (error) {
-    res.status(500).json({ message: "Error al obtener usuario" });
+    res
+      .status(500)
+      .json({ message: "Error al obtener usuario", error: error.message });
   }
 };
 

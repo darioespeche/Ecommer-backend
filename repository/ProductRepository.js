@@ -3,8 +3,8 @@ const ProductManager = require("../managers/ProductManager");
 const productManager = new ProductManager();
 
 class ProductRepository {
-  async getAllBasic() {
-    return await productManager.getAllBasic();
+  async getAllProducts() {
+    return await productManager.getAllProducts();
   }
 
   async getById(id) {
